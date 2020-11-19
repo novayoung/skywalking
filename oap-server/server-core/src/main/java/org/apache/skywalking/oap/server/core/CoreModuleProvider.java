@@ -18,9 +18,10 @@
 
 package org.apache.skywalking.oap.server.core;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Paths;
 import org.apache.skywalking.oap.server.configuration.api.ConfigurationModule;
 import org.apache.skywalking.oap.server.configuration.api.DynamicConfigurationService;
 import org.apache.skywalking.oap.server.core.analysis.ApdexThresholdConfig;
@@ -52,6 +53,7 @@ import org.apache.skywalking.oap.server.core.oal.rt.OALEngineLoaderService;
 import org.apache.skywalking.oap.server.core.profile.ProfileTaskMutationService;
 import org.apache.skywalking.oap.server.core.query.AggregationQueryService;
 import org.apache.skywalking.oap.server.core.query.AlarmQueryService;
+import org.apache.skywalking.oap.server.core.query.BrowserLogQueryService;
 import org.apache.skywalking.oap.server.core.query.LogQueryService;
 import org.apache.skywalking.oap.server.core.query.MetadataQueryService;
 import org.apache.skywalking.oap.server.core.query.MetricsMetadataQueryService;
@@ -145,14 +147,14 @@ public class CoreModuleProvider extends ModuleProvider {
         }
         EndpointNameGrouping endpointNameGrouping = new EndpointNameGrouping();
         this.registerServiceImplementation(NamingControl.class, new NamingControl(
-                moduleConfig.getServiceNameMaxLength(),
-                moduleConfig.getInstanceNameMaxLength(),
-                moduleConfig.getEndpointNameMaxLength(),
-                endpointNameGrouping
+            moduleConfig.getServiceNameMaxLength(),
+            moduleConfig.getInstanceNameMaxLength(),
+            moduleConfig.getEndpointNameMaxLength(),
+            endpointNameGrouping
         ));
         try {
             endpointNameGroupingRuleWatcher = new EndpointNameGroupingRuleWatcher(
-                    this, endpointNameGrouping);
+                this, endpointNameGrouping);
         } catch (FileNotFoundException e) {
             throw new ModuleStartException(e.getMessage(), e);
         }
@@ -180,8 +182,8 @@ public class CoreModuleProvider extends ModuleProvider {
 
         if (moduleConfig.isGRPCSslEnabled()) {
             grpcServer = new GRPCServer(moduleConfig.getGRPCHost(), moduleConfig.getGRPCPort(),
-                    Paths.get(moduleConfig.getGRPCSslCertChainPath()).toFile(),
-                    Paths.get(moduleConfig.getGRPCSslKeyPath()).toFile()
+                                        moduleConfig.getGRPCSslCertChainPath(),
+                                        moduleConfig.getGRPCSslKeyPath()
             );
         } else {
             grpcServer = new GRPCServer(moduleConfig.getGRPCHost(), moduleConfig.getGRPCPort());
@@ -217,7 +219,7 @@ public class CoreModuleProvider extends ModuleProvider {
 
         this.registerServiceImplementation(ConfigService.class, new ConfigService(moduleConfig));
         this.registerServiceImplementation(
-                DownSamplingConfigService.class, new DownSamplingConfigService(moduleConfig.getDownsampling()));
+            DownSamplingConfigService.class, new DownSamplingConfigService(moduleConfig.getDownsampling()));
 
         this.registerServiceImplementation(GRPCHandlerRegister.class, new GRPCHandlerRegisterImpl(grpcServer));
         this.registerServiceImplementation(JettyHandlerRegister.class, new JettyHandlerRegisterImpl(jettyServer));
@@ -236,12 +238,13 @@ public class CoreModuleProvider extends ModuleProvider {
         this.registerServiceImplementation(ModelManipulator.class, storageModels);
 
         this.registerServiceImplementation(
-                NetworkAddressAliasCache.class, new NetworkAddressAliasCache(moduleConfig));
+            NetworkAddressAliasCache.class, new NetworkAddressAliasCache(moduleConfig));
 
         this.registerServiceImplementation(TopologyQueryService.class, new TopologyQueryService(getManager()));
         this.registerServiceImplementation(MetricsMetadataQueryService.class, new MetricsMetadataQueryService());
         this.registerServiceImplementation(MetricsQueryService.class, new MetricsQueryService(getManager()));
         this.registerServiceImplementation(TraceQueryService.class, new TraceQueryService(getManager()));
+        this.registerServiceImplementation(BrowserLogQueryService.class, new BrowserLogQueryService(getManager()));
         this.registerServiceImplementation(LogQueryService.class, new LogQueryService(getManager()));
         this.registerServiceImplementation(MetadataQueryService.class, new MetadataQueryService(getManager()));
         this.registerServiceImplementation(AggregationQueryService.class, new AggregationQueryService(getManager()));
@@ -250,9 +253,9 @@ public class CoreModuleProvider extends ModuleProvider {
 
         // add profile service implementations
         this.registerServiceImplementation(
-                ProfileTaskMutationService.class, new ProfileTaskMutationService(getManager()));
+            ProfileTaskMutationService.class, new ProfileTaskMutationService(getManager()));
         this.registerServiceImplementation(
-                ProfileTaskQueryService.class, new ProfileTaskQueryService(getManager(), moduleConfig));
+            ProfileTaskQueryService.class, new ProfileTaskQueryService(getManager(), moduleConfig));
         this.registerServiceImplementation(ProfileTaskCache.class, new ProfileTaskCache(getManager(), moduleConfig));
 
         this.registerServiceImplementation(CommandService.class, new CommandService(getManager()));
@@ -264,8 +267,7 @@ public class CoreModuleProvider extends ModuleProvider {
 
         if (moduleConfig.isGRPCSslEnabled()) {
             this.remoteClientManager = new RemoteClientManager(getManager(), moduleConfig.getRemoteTimeout(),
-                    Paths.get(moduleConfig.getGRPCSslTrustedCAPath())
-                            .toFile()
+                                                               moduleConfig.getGRPCSslTrustedCAPath()
             );
         } else {
             this.remoteClientManager = new RemoteClientManager(getManager(), moduleConfig.getRemoteTimeout());
@@ -273,7 +275,8 @@ public class CoreModuleProvider extends ModuleProvider {
         this.registerServiceImplementation(RemoteClientManager.class, remoteClientManager);
 
         // Management
-        this.registerServiceImplementation(UITemplateManagementService.class, new UITemplateManagementService(getManager()));
+        this.registerServiceImplementation(
+            UITemplateManagementService.class, new UITemplateManagementService(getManager()));
 
         MetricsStreamProcessor.getInstance().setEnableDatabaseSession(moduleConfig.isEnableDatabaseSession());
         TopNStreamProcessor.getInstance().setTopNWorkerReportCycle(moduleConfig.getTopNReportPeriod());
@@ -297,23 +300,23 @@ public class CoreModuleProvider extends ModuleProvider {
         Address gRPCServerInstanceAddress = new Address(moduleConfig.getGRPCHost(), moduleConfig.getGRPCPort(), true);
         TelemetryRelatedContext.INSTANCE.setId(gRPCServerInstanceAddress.toString());
         if (CoreModuleConfig.Role.Mixed.name()
-                .equalsIgnoreCase(
-                        moduleConfig.getRole())
-                || CoreModuleConfig.Role.Aggregator.name()
-                .equalsIgnoreCase(
-                        moduleConfig.getRole())) {
+                                       .equalsIgnoreCase(
+                                           moduleConfig.getRole())
+            || CoreModuleConfig.Role.Aggregator.name()
+                                               .equalsIgnoreCase(
+                                                   moduleConfig.getRole())) {
             RemoteInstance gRPCServerInstance = new RemoteInstance(gRPCServerInstanceAddress);
             this.getManager()
-                    .find(ClusterModule.NAME)
-                    .provider()
-                    .getService(ClusterRegister.class)
-                    .registerRemote(gRPCServerInstance);
+                .find(ClusterModule.NAME)
+                .provider()
+                .getService(ClusterRegister.class)
+                .registerRemote(gRPCServerInstance);
         }
 
         DynamicConfigurationService dynamicConfigurationService = getManager().find(ConfigurationModule.NAME)
-                .provider()
-                .getService(
-                        DynamicConfigurationService.class);
+                                                                              .provider()
+                                                                              .getService(
+                                                                                  DynamicConfigurationService.class);
         dynamicConfigurationService.registerConfigChangeWatcher(apdexThresholdConfig);
         dynamicConfigurationService.registerConfigChangeWatcher(endpointNameGroupingRuleWatcher);
     }
@@ -336,11 +339,15 @@ public class CoreModuleProvider extends ModuleProvider {
         CacheUpdateTimer.INSTANCE.start(getManager(), moduleConfig.getMetricsDataTTL());
 
         try {
-            new UITemplateInitializer(ResourceUtils.read("ui-initialized-templates.yml"))
+            final File[] templateFiles = ResourceUtils.getPathFiles("ui-initialized-templates");
+            for (final File templateFile : templateFiles) {
+                new UITemplateInitializer(new FileInputStream(templateFile))
                     .read()
                     .forEach(uiTemplate -> {
                         ManagementStreamProcessor.getInstance().in(uiTemplate);
                     });
+            }
+
         } catch (FileNotFoundException e) {
             throw new ModuleStartException(e.getMessage(), e);
         }
@@ -348,9 +355,9 @@ public class CoreModuleProvider extends ModuleProvider {
 
     @Override
     public String[] requiredModules() {
-        return new String[]{
-                TelemetryModule.NAME,
-                ConfigurationModule.NAME
+        return new String[] {
+            TelemetryModule.NAME,
+            ConfigurationModule.NAME
         };
     }
 }

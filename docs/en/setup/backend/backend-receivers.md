@@ -16,6 +16,7 @@ We have following receivers, and `default` implementors are provided in our Apac
 1. **receiver_jaeger**. See [details](#jaeger-receiver).
 1. **receiver-oc**. See [details](#opencensus-receiver).
 1. **receiver-meter**. See [details](backend-meter.md).
+1. **receiver-browser**. gRPC services to accept browser performance data and error log.
 
 The sample settings of these receivers should be already in default `application.yml`, and also list here
 ```yaml
@@ -60,6 +61,11 @@ receiver_zipkin:
 receiver-profile:
   selector: ${SW_RECEIVER_PROFILE:default}
   default:
+
+receiver-browser:
+  selector: ${SW_RECEIVER_BROWSER:default}
+  default:
+    sampleRate: ${SW_RECEIVER_BROWSER_SAMPLE_RATE:10000}
 ```
 
 ## gRPC/HTTP server for receiver

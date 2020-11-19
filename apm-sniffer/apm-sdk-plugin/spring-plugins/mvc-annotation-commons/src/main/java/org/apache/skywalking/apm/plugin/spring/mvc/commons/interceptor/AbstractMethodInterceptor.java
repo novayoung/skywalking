@@ -19,9 +19,9 @@
 package org.apache.skywalking.apm.plugin.spring.mvc.commons.interceptor;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -205,7 +205,7 @@ public abstract class AbstractMethodInterceptor implements InstanceMethodsAround
     @Override
     public void handleMethodException(EnhancedInstance objInst, Method method, Object[] allArguments,
                                       Class<?>[] argumentsTypes, Throwable t) {
-        ContextManager.activeSpan().errorOccurred().log(t);
+        ContextManager.activeSpan().log(t);
     }
 
     private void collectHttpParam(RequestHolder request, AbstractSpan span) {
@@ -219,7 +219,7 @@ public abstract class AbstractMethodInterceptor implements InstanceMethodsAround
     }
 
     private void collectHttpHeaders(RequestHolder request, AbstractSpan span) {
-        final List<String> headersList = new LinkedList<>();
+        final List<String> headersList = new ArrayList<>(SpringMVCPluginConfig.Plugin.Http.INCLUDE_HTTP_HEADERS.size());
         SpringMVCPluginConfig.Plugin.Http.INCLUDE_HTTP_HEADERS.stream()
                                                               .filter(
                                                                   headerName -> request.getHeaders(headerName) != null)

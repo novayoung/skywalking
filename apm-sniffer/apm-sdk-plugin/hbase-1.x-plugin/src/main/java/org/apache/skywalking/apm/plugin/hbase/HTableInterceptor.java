@@ -37,6 +37,7 @@ import org.apache.skywalking.apm.network.trace.component.ComponentsDefine;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -74,10 +75,10 @@ public class HTableInterceptor implements InstanceMethodsAroundInterceptor, Inst
             while (next.hasNext()) {
                 next = next.next();
                 if (operation != null) {
-                    operation.setAttribute(next.getHeadKey(), next.getHeadValue().getBytes());
+                    operation.setAttribute(next.getHeadKey(), next.getHeadValue().getBytes(StandardCharsets.UTF_8));
                 } else {
                     for (OperationWithAttributes o : operations) {
-                        o.setAttribute(next.getHeadKey(), next.getHeadValue().getBytes());
+                        o.setAttribute(next.getHeadKey(), next.getHeadValue().getBytes(StandardCharsets.UTF_8));
                     }
                 }
             }
@@ -102,7 +103,6 @@ public class HTableInterceptor implements InstanceMethodsAroundInterceptor, Inst
     public void handleMethodException(EnhancedInstance objInst, Method method, Object[] allArguments,
                                       Class<?>[] argumentsTypes, Throwable t) {
         AbstractSpan span = ContextManager.activeSpan();
-        span.errorOccurred();
         span.log(t);
     }
 

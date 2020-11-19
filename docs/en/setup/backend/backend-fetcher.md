@@ -8,12 +8,12 @@ prometheus-fetcher:
   selector: ${SW_PROMETHEUS_FETCHER:default}
   default:
     active: ${SW_PROMETHEUS_FETCHER_ACTIVE:false}
-``` 
+```
 
 ### Configuration file
 Prometheus fetcher is configured via a configuration file. The configuration file defines everything related to fetching
  services and their instances, as well as which rule files to load.
-                   
+
 OAP can load the configuration at bootstrap. If the new configuration is not well-formed, OAP fails to start up. The files
 are located at `$CLASSPATH/fetcher-prom-rules`.
 
@@ -23,7 +23,7 @@ A full example can be found [here](../../../../oap-server/server-bootstrap/src/m
 
 Generic placeholders are defined as follows:
 
- * `<duration>`: a duration This will parse a textual representation of a duration. The formats accepted are based on 
+ * `<duration>`: a duration This will parse a textual representation of a duration. The formats accepted are based on
                  the ISO-8601 duration format `PnDTnHnMn.nS` with days considered to be exactly 24 hours.
  * `<labelname>`: a string matching the regular expression \[a-zA-Z_\]\[a-zA-Z0-9_\]*
  * `<labelvalue>`: a string of unicode characters
@@ -33,7 +33,7 @@ Generic placeholders are defined as follows:
 
 ```yaml
 # How frequently to fetch targets.
-fetcherInterval: <duration> 
+fetcherInterval: <duration>
 # Per-fetch timeout when fetching this target.
 fetcherTimeout: <duration>
 # The HTTP resource path on which to fetch metrics from targets.
@@ -42,13 +42,24 @@ metricsPath: <path>
 staticConfig:
   # The targets specified by the static config.
   targets:
-    [ - <host> ]
+    [ - <target> ]
   # Labels assigned to all metrics fetched from the targets.
   labels:
     [ <labelname>: <labelvalue> ... ]
+# default metric level function appends to all expression in this file.
+defaultMetricLevel: <exp>
 # Metrics rule allow you to recompute queries.
 metricsRules:
    [ - <metric_rules> ]
+```
+
+#### <target>
+
+```yaml
+# The url of target exporter. the format should be complied with "java.net.URI"
+url: <string>
+# The path of root CA file.
+sslCaFilePath: <string>
 ```
 
 #### <metric_rules>
@@ -56,35 +67,11 @@ metricsRules:
 ```yaml
 # The name of rule, which combinates with a prefix 'meter_' as the index/table name in storage.
 name: <string>
-# Scope should be one of SERVICE, INSTANCE and ENDPOINT.
-scope: <string>
-# The transformation operation from prometheus metrics to skywalking ones. 
-operation: <operation>
-# The prometheus sources of the transformation operation.
-sources:
-  # The prometheus metric family name 
-  <string>:
-    # Function for counter, one of INCREASE, RATE, and IRATE.
-    [counterFunction: <string> ]
-    # The range of a counterFunction.
-    [range: <duration>]
-    # The percentile rank of percentile operation
-    [percentiles: [<rank>,...]]
-    # Relabel prometheus labels to skywalking dimensions.
-    relabel:
-      service: [<labelname>, ...]
-      [instance: [<labelname>, ...]]
-      [endpoint: [<labelname>, ...]]
+# MAL expression.
+exp: <string>
 ```
 
-#### <operation>
-
-The available operations are `avg`, `avgHistogram` and `avgHistogramPercentile`. The `avg` and `avgXXX` mean to average
-the raw fetched metrics or high rate metrics into low rate metrics. The process is the extension of skywalking downsampling, 
-that adds the procedure from raw data to minute rate.
-
-When you specify `avgHistogram` and `avgHistogramPercentile`, the source should be the type of `histogram`. A counterFunction
-is also needed due to the `bucket`, `sum` and `count` of histogram are counters.
+More about MAL, please refer to [mal.md](../../concepts-and-designs/mal.md)
 
 ## Kafka Fetcher
 

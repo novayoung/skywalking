@@ -35,6 +35,7 @@ import org.apache.skywalking.apm.plugin.kafka.define.Constants;
 import org.apache.skywalking.apm.plugin.kafka.define.KafkaContext;
 
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -88,7 +89,7 @@ public class KafkaConsumerInterceptor implements InstanceMethodsAroundIntercepto
                         next = next.next();
                         Iterator<Header> iterator = record.headers().headers(next.getHeadKey()).iterator();
                         if (iterator.hasNext()) {
-                            next.setHeadValue(new String(iterator.next().value()));
+                            next.setHeadValue(new String(iterator.next().value(), StandardCharsets.UTF_8));
                         }
                     }
                     ContextManager.extract(contextCarrier);
@@ -107,7 +108,7 @@ public class KafkaConsumerInterceptor implements InstanceMethodsAroundIntercepto
          * {@link #afterMethod}, before the creation of entry span, we can not ensure there is an active span
          */
         if (ContextManager.isActive()) {
-            ContextManager.activeSpan().errorOccurred().log(t);
+            ContextManager.activeSpan().log(t);
         }
     }
 }

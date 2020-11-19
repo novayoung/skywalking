@@ -18,11 +18,14 @@
 
 package org.apache.skywalking.apm.agent.core.conf;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.skywalking.apm.agent.core.context.trace.TraceSegment;
 import org.apache.skywalking.apm.agent.core.logging.core.LogLevel;
 import org.apache.skywalking.apm.agent.core.logging.core.LogOutput;
+import org.apache.skywalking.apm.agent.core.logging.core.ResolverType;
 import org.apache.skywalking.apm.agent.core.logging.core.WriterFactory;
 import org.apache.skywalking.apm.agent.core.plugin.bytebuddy.ClassCacheMode;
 import org.apache.skywalking.apm.util.Length;
@@ -121,7 +124,6 @@ public class Config {
          * Keep tracing even the backend is not available.
          */
         public static boolean KEEP_TRACING = false;
-
     }
 
     public static class OsInfo {
@@ -140,6 +142,10 @@ public class Config {
          * The period in which the agent report a heartbeat to the backend.
          */
         public static long HEARTBEAT_PERIOD = 30;
+        /**
+         * The agent sends the instance properties to the backend every `collector.heartbeat_period * collector.properties_report_period_factor` seconds
+         */
+        public static int PROPERTIES_REPORT_PERIOD_FACTOR = 10;
         /**
          * Collector skywalking trace receiver service addresses.
          */
@@ -250,6 +256,11 @@ public class Config {
         public static LogOutput OUTPUT = LogOutput.FILE;
 
         /**
+         * The log resolver type. Default is PATTERN which will create PatternLogResolver later.
+         */
+        public static ResolverType RESOLVER = ResolverType.PATTERN;
+
+        /**
          * The log patten. Default is "%level %timestamp %thread %class : %msg %throwable". Each conversion specifiers
          * starts with a percent sign '%' and fis followed by conversion word. There are some default conversion
          * specifiers: %thread = ThreadName %level = LogLevel  {@link LogLevel} %timestamp = The now() who format is
@@ -259,6 +270,21 @@ public class Config {
          * @see org.apache.skywalking.apm.agent.core.logging.core.PatternLogger#DEFAULT_CONVERTER_MAP
          */
         public static String PATTERN = "%level %timestamp %thread %class : %msg %throwable";
+    }
+
+    public static class StatusCheck {
+        /**
+         * Listed exceptions would not be treated as an error. Because in some codes, the exception is being used as a
+         * way of controlling business flow.
+         */
+        public static String IGNORED_EXCEPTIONS = "";
+
+        /**
+         * The max recursive depth when checking the exception traced by the agent. Typically, we don't recommend
+         * setting this more than 10, which could cause a performance issue. Negative value and 0 would be ignored,
+         * which means all exceptions would make the span tagged in error status.
+         */
+        public static Integer MAX_RECURSIVE_DEPTH = 1;
     }
 
     public static class Plugin {
@@ -271,6 +297,11 @@ public class Config {
          * Exclude activated plugins
          */
         public static String EXCLUDE_PLUGINS = "";
+
+        /**
+         * Mount the folders of the plugins. The folder path is relative to agent.jar.
+         */
+        public static List<String> MOUNT = Arrays.asList("plugins", "activations");
     }
 
     public static class Correlation {
@@ -283,5 +314,10 @@ public class Config {
          * Max value length of each element.
          */
         public static int VALUE_MAX_LENGTH = 128;
+
+        /**
+         * Tag the span by the key/value in the correlation context, when the keys listed here exist.
+         */
+        public static String AUTO_TAG_KEYS = "";
     }
 }

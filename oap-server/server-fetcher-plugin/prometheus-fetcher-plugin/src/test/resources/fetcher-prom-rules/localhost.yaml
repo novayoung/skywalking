@@ -19,20 +19,9 @@ metricsPath: /metrics
 staticConfig:
   # targets will be labeled as "instance"
   targets:
-    - localhost:1234
+    - url: http://localhost:1234
   labels:
     app: test-oap
 metricsRules:
   - name: instance_cpu_percentage
-    scope: SERVICE_INSTANCE
-    operation: avg
-    sources:
-      process_cpu_seconds_total:
-        counterFunction: RATE
-        range: PT1M
-        scale: 2
-        relabel:
-          service:
-            - app
-          instance:
-            - instance
+    exp: (instance_cpu_percentage * 100).rate("PT1M").instance(["app"], ["instance"])

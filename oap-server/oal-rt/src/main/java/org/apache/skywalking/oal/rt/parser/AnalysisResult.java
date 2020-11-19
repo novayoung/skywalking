@@ -18,6 +18,7 @@
 
 package org.apache.skywalking.oal.rt.parser;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import lombok.Getter;
@@ -43,7 +44,7 @@ public class AnalysisResult {
 
     private int sourceScopeId;
 
-    private String sourceAttribute;
+    private List<String> sourceAttribute = new ArrayList<>();
 
     private String aggregationFunctionName;
 
@@ -56,6 +57,8 @@ public class AnalysisResult {
     private List<ConditionExpression> filterExpressionsParserResult;
 
     private List<ConditionExpression> funcConditionExpressions;
+
+    private int funcConditionExpressionGetIdx = 0;
 
     private List<Argument> funcArgs;
 
@@ -80,6 +83,10 @@ public class AnalysisResult {
             funcConditionExpressions = new LinkedList<>();
         }
         funcConditionExpressions.add(conditionExpression);
+    }
+
+    public ConditionExpression getNextFuncConditionExpression() {
+        return funcConditionExpressions.get(funcConditionExpressionGetIdx++);
     }
 
     public void addFilterExpressions(Expression filterExpression) {

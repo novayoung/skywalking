@@ -34,7 +34,7 @@ Read [Scope Definitions](scope-definitions.md), you can find all existing Scopes
 Use filter to build the conditions for the value of fields, by using field name and expression. 
 
 The expressions support to link by `and`, `or` and `(...)`. 
-The OPs support `==`, `!=`, `>`, `<`, `>=`, `<=`, `in [...]` ,`like %...`, `like ...%` and `like %...%`, with type detection based of field type. Trigger compile
+The OPs support `==`, `!=`, `>`, `<`, `>=`, `<=`, `in [...]` ,`like %...`, `like ...%` , `like %...%` , `contain` and `not contain`, with type detection based of field type. Trigger compile
  or code generation error if incompatible. 
 
 ## Aggregation Function
@@ -53,6 +53,12 @@ In this case, input are request of each ServiceInstanceJVMCPU scope, avg is base
 > endpoint_percent = from(Endpoint.*).percent(status == true);
 
 In this case, all input are requests of each endpoint, condition is `endpoint.status == true`.
+- `rate`. The rate expressed as a fraction of 100, for the condition matched input.
+> browser_app_error_rate = from(BrowserAppTraffic.*).rate(trafficCategory == BrowserAppTrafficCategory.FIRST_ERROR, trafficCategory == BrowserAppTrafficCategory.NORMAL);
+
+In this case, all input are requests of each browser app traffic, `numerator` condition is `trafficCategory == BrowserAppTrafficCategory.FIRST_ERROR` and `denominator` condition is `trafficCategory == BrowserAppTrafficCategory.NORMAL`.
+The parameter (1) is the `numerator` condition.
+The parameter (2) is the `denominator` condition.
 - `sum`. The sum calls per scope entity.
 > service_calls_sum = from(Service.*).sum();
 
@@ -99,38 +105,38 @@ In default, no one is being disable.
 
 ## Examples
 ```
-// Caculate p99 of both Endpoint1 and Endpoint2
+// Calculate p99 of both Endpoint1 and Endpoint2
 endpoint_p99 = from(Endpoint.latency).filter(name in ("Endpoint1", "Endpoint2")).summary(0.99)
 
-// Caculate p99 of Endpoint name started with `serv`
+// Calculate p99 of Endpoint name started with `serv`
 serv_Endpoint_p99 = from(Endpoint.latency).filter(name like "serv%").summary(0.99)
 
-// Caculate the avg response time of each Endpoint
+// Calculate the avg response time of each Endpoint
 endpoint_avg = from(Endpoint.latency).avg()
 
-// Caculate the p50, p75, p90, p95 and p99 of each Endpoint by 50 ms steps.
+// Calculate the p50, p75, p90, p95 and p99 of each Endpoint by 50 ms steps.
 endpoint_percentile = from(Endpoint.latency).percentile(10)
 
-// Caculate the percent of response status is true, for each service.
+// Calculate the percent of response status is true, for each service.
 endpoint_success = from(Endpoint.*).filter(status == true).percent()
 
-// Caculate the percent of response code in [200, 299], for each service.
-endpoint_200 = from(Endpoint.*).filter(responseCode like "2%").percent()
-
-// Caculate the percent of response code in [500, 599], for each service.
-endpoint_500 = from(Endpoint.*).filter(responseCode like "5%").percent()
-
-// Caculate the sum of response code in [404, 500, 503], for each service.
+// Calculate the sum of response code in [404, 500, 503], for each service.
 endpoint_abnormal = from(Endpoint.*).filter(responseCode in [404, 500, 503]).sum()
 
-// Caculate the sum of request type in [RequestType.PRC, RequestType.gRPC], for each service.
+// Calculate the sum of request type in [RequestType.PRC, RequestType.gRPC], for each service.
 endpoint_rpc_calls_sum = from(Endpoint.*).filter(type in [RequestType.PRC, RequestType.gRPC]).sum()
 
-// Caculate the sum of endpoint name in ["/v1", "/v2"], for each service.
+// Calculate the sum of endpoint name in ["/v1", "/v2"], for each service.
 endpoint_url_sum = from(Endpoint.*).filter(endpointName in ["/v1", "/v2"]).sum()
 
-// Caculate the sum of calls for each service.
+// Calculate the sum of calls for each service.
 endpoint_calls = from(Endpoint.*).sum()
+
+// Calculate the CPM with the GET method for each service.The value is made up with `tagKey:tagValue`.
+service_cpm_http_get = from(Service.*).filter(tags contain "http.method:GET").cpm()
+
+// Calculate the CPM with the HTTP method except for the GET method for each service.The value is made up with `tagKey:tagValue`.
+service_cpm_http_other = from(Service.*).filter(tags not contain "http.method:GET").cpm()
 
 disable(segment);
 disable(endpoint_relation_server_side);

@@ -71,13 +71,11 @@ public class AdapterActionFutureActionGetMethodsInterceptor implements InstanceM
     @Override
     public void handleMethodException(EnhancedInstance objInst, Method method, Object[] allArguments,
                                       Class<?>[] argumentsTypes, Throwable t) {
-        ContextManager.activeSpan().errorOccurred().log(t);
+        ContextManager.activeSpan().log(t);
     }
 
     private boolean isTrace(EnhancedInstance objInst) {
-
         return objInst.getSkyWalkingDynamicField() != null && (boolean) objInst.getSkyWalkingDynamicField();
-
     }
 
     private void parseResponseInfo(ActionResponse response, AbstractSpan span) {
