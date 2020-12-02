@@ -60,7 +60,7 @@ public class H2HistoryDeleteDAO implements IHistoryDeleteDAO {
                         return;
                 }
             }
-            client.execute(connection, dataDeleteSQL.toString(), deadline);
+            client.executeUpdate(connection, dataDeleteSQL.toString(), deadline);
         } catch (JDBCClientException | SQLException e) {
             throw new IOException(e.getMessage(), e);
         }
