@@ -19,7 +19,9 @@
 package org.apache.skywalking.oap.server.core.query;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import org.apache.skywalking.oap.server.core.analysis.IDManager;
 import org.apache.skywalking.oap.server.core.query.type.Database;
 import org.apache.skywalking.oap.server.core.query.type.Endpoint;
@@ -47,7 +49,7 @@ public class MetadataQueryService implements org.apache.skywalking.oap.server.li
     }
 
     public List<Service> getAllServices(final String group) throws IOException {
-        return getMetadataQueryDAO().getAllServices(group);
+        return distinct(getMetadataQueryDAO().getAllServices(group), Comparator.comparing(service -> service.getId() + service.getName() + service.getGroup()));
     }
 
     public List<Service> getAllBrowserServices() throws IOException {
@@ -60,7 +62,7 @@ public class MetadataQueryService implements org.apache.skywalking.oap.server.li
 
     public List<Service> searchServices(final long startTimestamp, final long endTimestamp,
                                         final String keyword) throws IOException {
-        return getMetadataQueryDAO().searchServices(keyword);
+        return distinct(getMetadataQueryDAO().searchServices(keyword), Comparator.comparing(service -> service.getId() + service.getName() + service.getGroup()));
     }
 
     public List<ServiceInstance> getServiceInstances(final long startTimestamp, final long endTimestamp,
@@ -70,14 +72,14 @@ public class MetadataQueryService implements org.apache.skywalking.oap.server.li
 
     public List<Endpoint> searchEndpoint(final String keyword, final String serviceId,
                                          final int limit) throws IOException {
-        return getMetadataQueryDAO().searchEndpoint(keyword, serviceId, limit);
+        return distinct(getMetadataQueryDAO().searchEndpoint(keyword, serviceId, limit), Comparator.comparing(endpoint -> endpoint.getId() + endpoint.getName()));
     }
 
     public Service searchService(final String serviceCode) throws IOException {
         return getMetadataQueryDAO().searchService(serviceCode);
     }
 
-    public EndpointInfo getEndpointInfo(final String endpointId) throws IOException {
+    public EndpointInfo getEndpointInfo(final String endpointId) {
         final IDManager.EndpointID.EndpointIDDefinition endpointIDDefinition = IDManager.EndpointID.analysisId(
             endpointId);
         final IDManager.ServiceID.ServiceIDDefinition serviceIDDefinition = IDManager.ServiceID.analysisId(
@@ -89,5 +91,13 @@ public class MetadataQueryService implements org.apache.skywalking.oap.server.li
         endpointInfo.setServiceId(endpointIDDefinition.getServiceId());
         endpointInfo.setServiceName(serviceIDDefinition.getName());
         return endpointInfo;
+    }
+
+    private <T> List<T> distinct(List<T> list, Comparator<T> comparator) {
+        if (list == null) {
+            return new ArrayList<>();
+        }
+        return list.stream()
+                .collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(comparator)), ArrayList::new));
     }
 }
