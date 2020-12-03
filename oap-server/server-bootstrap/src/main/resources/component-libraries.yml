@@ -344,6 +344,9 @@ dbcp:
 mssql-jdbc-driver:
   id: 104
   languages: Java
+Apache-CXF:
+  id: 105
+  languages: Java
 
 # .NET/.NET Core components
 # [3000, 4000) for C#/.NET only
@@ -469,6 +472,9 @@ Tornado:
   languages: Python
 Urllib3:
   id: 7006
+  languages: Python
+Sanic:
+  id: 7007
   languages: Python
 
 # PHP components
